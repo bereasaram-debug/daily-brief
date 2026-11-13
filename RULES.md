@@ -21,7 +21,7 @@
 
 ### 출처 우선순위
 1. 1차 출처: 선사 IR·보도자료, 정부·규제기관(USTR, 해양수산부, IMO 등), 항만당국, 수에즈운하청
-2. 주요 매체: Reuters, Bloomberg, Lloyd's List, JOC, Splash247, The Loadstar, TradeWinds
+2. 주요 매체: Reuters, Bloomberg, Lloyd's List, JOC, Splash247, The Loadstar, TradeWinds, Container News(container-news.com), Hellenic Shipping News(hellenicshippingnews.com), Drewry(drewry.co.kr), Xeneta 보도자료(xeneta.com/press)
 3. 국내 매체: 쉬핑가제트, 한국해운신문, 해양한국, 주요 경제지
 - 매체 보도만 있고 1차 출처가 있으면 1차 출처를 함께 확인해 링크
 
