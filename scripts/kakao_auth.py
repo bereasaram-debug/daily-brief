@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """카카오 토큰 최초 발급 (PC에서 1회 실행)
 
-사용법:  python scripts/kakao_auth.py
+사용법:  python scripts/kakao_auth.py            (입력값 숨김)
+        python scripts/kakao_auth.py --visible  (입력값이 화면에 보임. 붙여넣기가 안 될 때)
 - REST API 키와 클라이언트 시크릿을 입력합니다(화면에 표시되지 않음).
 - 브라우저에서 카카오 로그인·동의를 마치면, GitHub Secrets에 등록할 값 3개를 화면에 한 번 출력합니다.
 - 어떤 값도 파일로 저장하지 않습니다.
@@ -51,13 +52,42 @@ class CallbackHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
+def clean(value):
+    # 붙여넣기 중 섞일 수 있는 공백·제어문자(^V 등) 제거
+    return "".join(ch for ch in value if ch.isprintable() and not ch.isspace())
+
+
+def preview(value):
+    if len(value) <= 8:
+        return f"{len(value)}자 (너무 짧음. 잘못 입력된 것 같습니다)"
+    return f"{value[:4]}…{value[-4:]} ({len(value)}자)"
+
+
+def ask(label, visible):
+    while True:
+        raw = input(f"{label}: ") if visible else getpass.getpass(f"{label}: ")
+        value = clean(raw)
+        print(f"  → 입력 확인: {preview(value)}")
+        ok = input("  콘솔의 값과 앞 4자리·뒤 4자리가 같습니까? (y/n): ").strip().lower()
+        if ok == "y":
+            return value
+        print("  다시 입력하세요. 붙여넣기는 마우스 오른쪽 버튼 한 번을 권장합니다.\n")
+
+
 def main():
+    visible = "--visible" in sys.argv
     print("=== 카카오 토큰 최초 발급 ===")
-    print("입력하는 값은 화면에 보이지 않습니다. 붙여넣고 Enter를 누르세요.\n")
-    rest_key = getpass.getpass("REST API 키: ").strip()
-    client_secret = getpass.getpass("클라이언트 시크릿(카카오 로그인용): ").strip()
+    if visible:
+        print("[--visible] 입력값이 화면에 보입니다. 실행이 끝나면 이 창을 닫으세요.\n")
+    else:
+        print("입력하는 값은 화면에 보이지 않습니다. 붙여넣고 Enter를 누르세요.")
+        print("붙여넣기가 안 되면 Ctrl+C로 멈추고 --visible 을 붙여 다시 실행하세요.\n")
+    rest_key = ask("REST API 키", visible)
+    client_secret = ask("클라이언트 시크릿(카카오 로그인용)", visible)
     if not rest_key or not client_secret:
         sys.exit("REST API 키와 클라이언트 시크릿이 모두 필요합니다.")
+    if rest_key == client_secret:
+        sys.exit("REST API 키와 클라이언트 시크릿이 같습니다. 서로 다른 값을 넣어야 합니다.")
 
     state = secrets.token_urlsafe(16)
     query = urllib.parse.urlencode({
