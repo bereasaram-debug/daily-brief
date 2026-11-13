@@ -1,0 +1,81 @@
+name: Missing brief alert
+
+# 매일 09:00 KST(00:00 UTC)에 오늘 브리핑(reports/YYYY-MM-DD.kakao.txt)이
+# main에 없으면 카톡으로 실패 알림을 보냅니다.
+# GitHub 예약 실행은 수 분~수십 분 늦게 시작될 수 있습니다.
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "true로 두면 브리핑이 있어도 알림을 보냅니다(테스트용)."
+        required: false
+        default: "false"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kakao-send
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 오늘 브리핑 확인
+        id: check
+        env:
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          today=$(TZ=Asia/Seoul date +%F)
+          md=$(TZ=Asia/Seoul date +%-m/%-d)
+          dow=$(TZ=Asia/Seoul date +%u)
+          names=(월 화 수 목 금 토 일)
+          yo=${names[$((dow-1))]}
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          echo "page=https://${owner}.github.io/${repo}/" >> "$GITHUB_OUTPUT"
+          if [ -f "reports/${today}.kakao.txt" ] && [ "$FORCE" != "true" ]; then
+            echo "오늘(${today}) 브리핑이 있습니다. 알림을 보내지 않습니다."
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "오늘(${today}) 브리핑이 없습니다(또는 테스트). 알림을 보냅니다."
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            {
+              echo "text<<EOF_TEXT"
+              echo "[데일리 브리핑] ${md}(${yo}) 실패 알림"
+              echo "09:00 기준 오늘 브리핑이 올라오지 않았습니다."
+              echo "Perplexity 예약 작업의 실행 기록을 확인해 주세요."
+              echo "EOF_TEXT"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: 카톡 실패 알림 발송
+        id: send
+        if: steps.check.outputs.missing == 'true'
+        env:
+          KAKAO_REST_KEY: ${{ secrets.KAKAO_REST_KEY }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+          SUMMARY_TEXT: ${{ steps.check.outputs.text }}
+          PAGE_URL: ${{ steps.check.outputs.page }}
+        run: python3 scripts/kakao_send.py
+
+      - name: 갱신된 토큰 암호문 커밋
+        if: always() && steps.send.outputs.token_updated == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add kakao_token.enc
+          git commit -m "chore: 카카오 토큰 암호문 갱신 [skip ci]"
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          echo "::error::kakao_token.enc 커밋 실패"
+          exit 1

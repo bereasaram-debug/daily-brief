@@ -4,6 +4,7 @@
 환경변수
   KAKAO_REST_KEY, KAKAO_CLIENT_SECRET, KAKAO_REFRESH_TOKEN : GitHub Secrets
   SUMMARY_FILE : 보낼 요약 파일 경로 (비우면 테스트 메시지 발송)
+  SUMMARY_TEXT : 보낼 문구를 직접 지정 (실패 알림용, SUMMARY_FILE보다 우선)
   PAGE_URL     : [전문 보기] 버튼이 열 주소
   GITHUB_OUTPUT: Actions가 자동 제공 (token_updated=true 출력용)
 
@@ -123,7 +124,10 @@ def main():
 
     page_url = os.environ.get("PAGE_URL", "").strip()
     summary_file = os.environ.get("SUMMARY_FILE", "").strip()
-    if summary_file:
+    summary_text = os.environ.get("SUMMARY_TEXT", "").strip()
+    if summary_text:
+        text = summary_text
+    elif summary_file:
         with open(summary_file, encoding="utf-8") as f:
             text = f.read().strip()
     else:
