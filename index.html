@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- 최신 브리핑으로 자동 이동. 매일 아래 LATEST 값을 오늘 날짜로 바꿉니다. 비어 있으면 이동하지 않습니다. -->
+<script>
+  var LATEST = "";  // 예: "2026-11-14"
+  if (LATEST) { location.replace("reports/" + LATEST + ".html"); }
+</script>
+<title>컨테이너 해운 데일리 브리핑</title>
+<style>
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+         line-height:1.6; color:#1b1f24; background:#fff; }
+  @media (prefers-color-scheme: dark) { body { color:#e6e8eb; background:#0f1317; } a { color:#5aa9ff; } }
+  main { max-width:720px; margin:0 auto; padding:24px 16px; }
+  h1 { font-size:1.3rem; }
+  a { color:#0b5cad; }
+</style>
+</head>
+<body>
+<main>
+  <h1>컨테이너 해운 데일리 브리핑</h1>
+  <p id="status">아직 게시된 브리핑이 없습니다.</p>
+  <h2>지난 브리핑</h2>
+  <!-- 최신 날짜가 맨 위. 매일 한 줄씩 추가 -->
+  <ul id="archive">
+  </ul>
+</main>
+</body>
+</html>
