@@ -1,6 +1,6 @@
 name: Missing brief alert
 
-# 매일 09:00 KST(00:00 UTC)에 오늘 브리핑(reports/YYYY-MM-DD.kakao.txt)이
+# 휴일(토·일 또는 holidays.txt에 있는 날) 09:00 KST(00:00 UTC)에 오늘 브리핑(reports/YYYY-MM-DD.kakao.txt)이
 # main에 없으면 카톡으로 실패 알림을 보냅니다.
 # GitHub 예약 실행은 수 분~수십 분 늦게 시작될 수 있습니다.
 on:
@@ -40,7 +40,10 @@ jobs:
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
           echo "page=https://${owner}.github.io/${repo}/" >> "$GITHUB_OUTPUT"
-          if [ -f "reports/${today}.kakao.txt" ] && [ "$FORCE" != "true" ]; then
+          if [ "$dow" -lt 6 ] && ! grep -qx "$today" holidays.txt && [ "$FORCE" != "true" ]; then
+            echo "오늘(${today})은 휴일이 아니어서 브리핑 대상이 아닙니다. 알림을 보내지 않습니다."
+            echo "missing=false" >> "$GITHUB_OUTPUT"
+          elif [ -f "reports/${today}.kakao.txt" ] && [ "$FORCE" != "true" ]; then
             echo "오늘(${today}) 브리핑이 있습니다. 알림을 보내지 않습니다."
             echo "missing=false" >> "$GITHUB_OUTPUT"
           else
